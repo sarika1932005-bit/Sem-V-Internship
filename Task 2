@@ -1,0 +1,75 @@
+# Sentiment Analysis using TF-IDF and Logistic Regression
+
+# Step 1: Import Required Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import re
+import nltk
+nltk.download('stopwords')
+from nltk.corpus import stopwords
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# Step 2: Load Dataset
+# Sample dataset: Replace with your own CSV if needed
+# You can also use a sample from Kaggle or create your own dataframe
+data = {
+    'review': [
+        "I love this product! It works great and exceeded my expectations.",
+        "Terrible experience. It broke on the first day.",
+        "Average quality, nothing special.",
+        "Fantastic! Would definitely recommend to my friends.",
+        "Worst purchase ever. Completely disappointed.",
+        "It's okay, not the best but not the worst either.",
+        "Absolutely amazing, I’m very satisfied!",
+        "Not good. Waste of money.",
+        "Happy with the purchase. Good value for money.",
+        "Regret buying this. Poor quality and bad service."
+    ],
+    'sentiment': [1, 0, 0, 1, 0, 0, 1, 0, 1, 0]  # 1 = Positive, 0 = Negative
+}
+
+df = pd.DataFrame(data)
+print(df)
+
+# Step 3: Preprocess Text
+stop_words = set(stopwords.words('english'))
+
+def clean_text(text):
+    text = text.lower()
+    text = re.sub(r"[^a-zA-Z\s]", "", text)  # Remove punctuation/numbers
+    text = " ".join([word for word in text.split() if word not in stop_words])
+    return text
+
+df['clean_review'] = df['review'].apply(clean_text)
+
+# Step 4: TF-IDF Vectorization
+tfidf = TfidfVectorizer(max_features=1000)
+X = tfidf.fit_transform(df['clean_review']).toarray()
+y = df['sentiment']
+
+# Step 5: Split the Data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 6: Train Logistic Regression Model
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# Step 7: Make Predictions
+y_pred = model.predict(X_test)
+
+# Step 8: Evaluate the Model
+print("\nAccuracy:", accuracy_score(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
+
+# Step 9: Visualize Confusion Matrix
+sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt="d", cmap="Blues")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix")
+plt.show()
